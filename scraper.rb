@@ -6,10 +6,10 @@ require 'nokogiri'
 require 'date'
 require 'open-uri'
 
-require 'open-uri/cached'
+# require 'open-uri/cached'
 # require 'colorize'
-require 'pry'
-require 'csv'
+# require 'pry'
+# require 'csv'
 
 def noko(url)
   Nokogiri::HTML(open(url).read) 
@@ -39,17 +39,17 @@ end
       tds = [district, tds].flatten
     end
     data = { 
-      constituency: tds[0].text.strip.gsub("\n",' — '),
       name: tds[1].xpath('.//a').text.strip,
       name_mn: tds[2].text.strip,
       party: tds[4].text.strip,
+      constituency: tds[0].text.strip.gsub("\n",' — '),
       term: term,
       wikipedia: tds[1].xpath('.//a[not(@class="new")]/@href').text.strip,
       source: url,
     }
     data[:wikipedia].prepend @WIKI unless data[:wikipedia].empty?
-    puts data.values.to_csv
-    # ScraperWiki.save_sqlite([:name, :term], data)
+    # puts data.values.to_csv
+    ScraperWiki.save_sqlite([:name, :term], data)
   end
 end
 
