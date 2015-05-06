@@ -19,6 +19,7 @@ end
 
 @terms = {
   '2012' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012',
+  '2008' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008',
 }
 
 @terms.each do |term, pagename|
@@ -29,7 +30,7 @@ end
   district = nil
 
   members = page.xpath('.//h2/span[text()[contains(.,"Constituency")]]/following::table[1]')
-  members.xpath('.//tr').each do |tr|
+  members.xpath('.//tr[td]').each do |tr|
     tds = tr.xpath('./td')
     if tds.count == 5
       district = tds[0]
