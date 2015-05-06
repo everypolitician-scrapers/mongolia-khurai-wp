@@ -26,10 +26,11 @@ end
   url = "#{@WIKI}/wiki/#{pagename}"
   page = noko(url)
 
-  # Store this outside the loop so we can refer back in rowspans
-  district = nil
 
+  # Constituency based
   members = page.xpath('.//h2/span[text()[contains(.,"Constituency")]]/following::table[1]')
+    # Store this outside the loop so we can refer back in rowspans
+    district = nil
   members.xpath('.//tr[td]').each do |tr|
     tds = tr.xpath('./td')
     if tds.count == 5
@@ -51,5 +52,23 @@ end
     # puts data.values.to_csv
     ScraperWiki.save_sqlite([:name, :term], data)
   end
+
+  # Party List 
+  partylist = page.xpath('.//h2/span[text()[contains(.,"Party list")]]/following::table[1]')
+  partylist.xpath('.//tr[td]').each do |tr|
+    tds = tr.xpath('./td')
+    data = { 
+      name: tds[0].xpath('.//a').text.strip,
+      name_mn: tds[1].text.strip,
+      party: tds[3].text.strip,
+      constituency: 'n/a',
+      term: term,
+      wikipedia: tds[1].xpath('.//a[not(@class="new")]/@href').text.strip,
+      source: url,
+    }
+    data[:wikipedia].prepend @WIKI unless data[:wikipedia].empty?
+    ScraperWiki.save_sqlite([:name, :term], data)
+  end
+
 end
 
