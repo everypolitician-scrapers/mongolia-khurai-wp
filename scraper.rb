@@ -6,16 +6,14 @@ require 'nokogiri'
 require 'date'
 require 'open-uri'
 
-# require 'open-uri/cached'
-# require 'colorize'
-# require 'pry'
-# require 'csv'
+require 'open-uri/cached'
+require 'colorize'
+require 'pry'
+require 'csv'
 
 def noko(url)
   Nokogiri::HTML(open(url).read) 
 end
-
-@WIKI = 'http://en.wikipedia.org'
 
 @terms = {
   '2012' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012',
@@ -23,7 +21,7 @@ end
 }
 
 @terms.each do |term, pagename|
-  url = "#{@WIKI}/wiki/#{pagename}"
+  url = "https://en.wikipedia.org/wiki/" + pagename
   page = noko(url)
 
 
@@ -41,15 +39,13 @@ end
     end
     data = { 
       name: tds[1].xpath('.//a').text.strip,
-      name_mn: tds[2].text.strip,
+      name__mn: tds[2].text.strip,
       party: tds[4].text.strip,
       constituency: tds[0].text.strip.gsub("\n",' — '),
       term: term,
-      wikipedia: tds[1].xpath('.//a[not(@class="new")]/@href').text.strip,
+      wikiname: tds[1].xpath('.//a[not(@class="new")]/@title').text.strip,
       source: url,
     }
-    data[:wikipedia].prepend @WIKI unless data[:wikipedia].empty?
-    # puts data.values.to_csv
     ScraperWiki.save_sqlite([:name, :term], data)
   end
 
@@ -59,14 +55,13 @@ end
     tds = tr.xpath('./td')
     data = { 
       name: tds[0].xpath('.//a').text.strip,
-      name_mn: tds[1].text.strip,
+      name__mn: tds[1].text.strip,
       party: tds[3].text.strip,
       constituency: 'n/a',
       term: term,
-      wikipedia: tds[1].xpath('.//a[not(@class="new")]/@href').text.strip,
+      wikiname: tds[1].xpath('.//a[not(@class="new")]/@title').text.strip,
       source: url,
     }
-    data[:wikipedia].prepend @WIKI unless data[:wikipedia].empty?
     ScraperWiki.save_sqlite([:name, :term], data)
   end
 
