@@ -16,6 +16,7 @@ def noko(url)
 end
 
 @terms = {
+  '2016' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2016',
   '2012' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012',
   '2008' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008',
 }
@@ -37,16 +38,29 @@ end
       # Nokogiri::XML::NodeSet doesn't have an unshift
       tds = [district, tds].flatten
     end
-    data = { 
-      name: tds[1].xpath('.//a').text.strip,
-      name__mn: tds[2].text.strip,
-      party: tds[4].text.strip,
-      constituency: tds[0].text.strip.gsub("\n",' — '),
-      term: term,
-      wikiname: tds[1].xpath('.//a[not(@class="new")]/@title').text.strip,
-      source: url,
-    }
-    ScraperWiki.save_sqlite([:name, :term], data)
+    if term == "2016" && tds[1][:rowspan] == "3"
+      data = {
+        name: tds[3].text.strip,
+        name_mn: tds[4].text.strip,
+        party: tds[6].text.strip,
+        constituency: tds[1].xpath('.//a').text.strip,
+        term: term,
+        wikiname: tds[3].xpath('.//a[not(@class="new")]/@title').text.strip,
+        source: url,
+      }
+      ScraperWiki.save_sqlite([:name, :term], data)
+    else
+      data = {
+        name: tds[1].xpath('.//a').text.strip,
+        name__mn: tds[2].text.strip,
+        party: tds[4].text.strip,
+        constituency: 'n/a',
+        term: term,
+        wikiname: tds[1].xpath('.//a[not(@class="new")]/@title').text.strip,
+        source: url,
+      }
+      ScraperWiki.save_sqlite([:name, :term], data)
+    end
   end
 
   # Party List 
