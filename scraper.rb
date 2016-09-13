@@ -43,7 +43,7 @@ end
         name: tds[3].text.strip,
         name_mn: tds[4].text.strip,
         party: tds[6].text.strip,
-        constituency: tds[1].xpath('.//a').text.strip,
+        constituency: 'n/a',
         term: term,
         wikiname: tds[3].xpath('.//a[not(@class="new")]/@title').text.strip,
         source: url,
