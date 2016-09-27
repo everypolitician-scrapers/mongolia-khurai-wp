@@ -96,15 +96,15 @@ class TermScraper
     end
   end
 
-  def save
-    members.each do |mem|
-      ScraperWiki.save_sqlite([:name, :term], mem)
-    end
-  end
-
   private
 
   attr_reader :term
+end
+
+def save(term)
+  term.members.each do |mem|
+    ScraperWiki.save_sqlite([:name, :term], mem)
+  end
 end
 
 base_url = 'https://en.wikipedia.org/wiki/'
@@ -114,5 +114,5 @@ terms = [
 ]
 
 terms.each do |term|
-  TermScraper.new(term[:year], base_url + term[:url]).save
+  save(TermScraper.new(term[:year], base_url + term[:url]))
 end
