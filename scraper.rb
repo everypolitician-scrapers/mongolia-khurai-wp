@@ -62,15 +62,13 @@ class Row
 end
 
 class Khurai
-  def initialize(term, url)
+  def initialize(url)
     @url = url
     @term = term
   end
 
   def members
-    Table.new(table).rows.map do |row|
-      row.merge(term: term)
-    end
+    Table.new(table).rows
   end
 
   private
@@ -86,15 +84,35 @@ class Khurai
   end
 end
 
-base_url = 'https://en.wikipedia.org/wiki/'
+class TermScraper
+  def initialize(term, url)
+    @members = Khurai.new(url).members
+    @term = term
+  end
 
+  def members
+    @members.map do |member|
+      member.merge(term: term)
+    end
+  end
+
+  def save
+    members.each do |mem|
+      ScraperWiki.save_sqlite([:name, :term], mem)
+    end
+  end
+
+  private
+
+  attr_reader :term
+end
+
+base_url = 'https://en.wikipedia.org/wiki/'
 terms = [
-  { year: '2012', url: base_url+'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012' },
-  { year: '2008', url: base_url+'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008' },
+  { year: '2012', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012' },
+  { year: '2008', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008' },
 ]
 
 terms.each do |term|
-  Khurai.new(term[:year], term[:url]).members.each do |mem|
-    ScraperWiki.save_sqlite([:name, :term], mem)
-  end
+  TermScraper.new(term[:year], base_url + term[:url]).save
 end
