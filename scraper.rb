@@ -84,7 +84,7 @@ class Khurai
   end
 end
 
-class TermScraper
+class Term
   def initialize(term, url)
     @members = Khurai.new(url).members
     @term = term
@@ -114,5 +114,5 @@ terms = [
 ]
 
 terms.each do |term|
-  save(TermScraper.new(term[:year], base_url + term[:url]))
+  save(Term.new(term[:year], base_url + term[:url]))
 end
