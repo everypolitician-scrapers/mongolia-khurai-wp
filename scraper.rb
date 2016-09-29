@@ -17,6 +17,7 @@ class Table
     table.xpath('.//tr[td]').map do |tr|
       tds = tr.xpath('./td')
       constituency = tds.shift.text.strip.gsub("\n",' — ') if tds.first[:rowspan]
+      tds.shift if tds.count == 5 # 2016 table has an extra column
       Row.new(tds).to_h.merge(constituency: constituency)
     end
   end
@@ -102,6 +103,7 @@ end
 
 base_url = 'https://en.wikipedia.org/wiki/'
 terms = [
+  { year: '2016', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2016' },
   { year: '2012', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012' },
   { year: '2008', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008' },
 ]
