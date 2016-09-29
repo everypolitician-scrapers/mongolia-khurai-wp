@@ -3,67 +3,111 @@
 
 require 'scraperwiki'
 require 'nokogiri'
-require 'date'
-require 'open-uri'
-
 require 'open-uri/cached'
-require 'colorize'
+require 'field_serializer'
 require 'pry'
-require 'csv'
 
-def noko(url)
-  Nokogiri::HTML(open(url).read) 
-end
+class Table
+  def initialize(node)
+    @table = node
+  end
 
-@terms = {
-  '2012' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012',
-  '2008' => 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008',
-}
-
-@terms.each do |term, pagename|
-  url = "https://en.wikipedia.org/wiki/" + pagename
-  page = noko(url)
-
-
-  # Constituency based
-  members = page.xpath('.//h2/span[text()[contains(.,"Constituency")]]/following::table[1]')
-    # Store this outside the loop so we can refer back in rowspans
-    district = nil
-  members.xpath('.//tr[td]').each do |tr|
-    tds = tr.xpath('./td')
-    if tds.count == 5
-      district = tds[0]
-    else
-      # Nokogiri::XML::NodeSet doesn't have an unshift
-      tds = [district, tds].flatten
+  def rows
+    constituency = nil
+    table.xpath('.//tr[td]').map do |tr|
+      tds = tr.xpath('./td')
+      constituency = tds.shift.text.strip.gsub("\n",' — ') if tds.first[:rowspan]
+      tds.shift if tds.count == 5 # 2016 table has an extra column
+      Row.new(tds).to_h.merge(constituency: constituency)
     end
-    data = { 
-      name: tds[1].xpath('.//a').text.strip,
-      name__mn: tds[2].text.strip,
-      party: tds[4].text.strip,
-      constituency: tds[0].text.strip.gsub("\n",' — '),
-      term: term,
-      wikiname: tds[1].xpath('.//a[not(@class="new")]/@title').text.strip,
-      source: url,
-    }
-    ScraperWiki.save_sqlite([:name, :term], data)
   end
 
-  # Party List 
-  partylist = page.xpath('.//h2/span[text()[contains(.,"Party list")]]/following::table[1]')
-  partylist.xpath('.//tr[td]').each do |tr|
-    tds = tr.xpath('./td')
-    data = { 
-      name: tds[0].xpath('.//a').text.strip,
-      name__mn: tds[1].text.strip,
-      party: tds[3].text.strip,
-      constituency: 'n/a',
-      term: term,
-      wikiname: tds[1].xpath('.//a[not(@class="new")]/@title').text.strip,
-      source: url,
-    }
-    ScraperWiki.save_sqlite([:name, :term], data)
-  end
+  private
 
+  attr_reader :table
 end
 
+class Row
+  include FieldSerializer
+
+  def initialize(tds)
+    @tds = tds
+  end
+
+  field :name do
+    tds[0].xpath('.//a').text.strip
+  end
+
+  field :name_mn do
+    tds[1].text.strip
+  end
+
+  field :party do
+    tds[3].text.strip
+  end
+
+  field :wikiname do
+    tds[0].xpath('.//a[not(@class="new")]/@title').text.strip
+  end
+
+  private
+
+  attr_reader :tds
+end
+
+class Khurai
+  def initialize(url)
+    @url = url
+    @term = term
+  end
+
+  def members
+    Table.new(table).rows
+  end
+
+  private
+
+  attr_reader :url, :term
+
+  def page
+    Nokogiri::HTML(open(url).read)
+  end
+
+  def table
+    page.xpath('.//h2/span[text()[contains(.,"Constituency")]]/following::table[1]')
+  end
+end
+
+class Term
+  def initialize(term, url)
+    @members = Khurai.new(url).members
+    @term = term
+  end
+
+  def members
+    @members.map do |member|
+      member.merge(term: term)
+    end
+  end
+
+  private
+
+  attr_reader :term
+end
+
+def save(term)
+  term.members.each do |mem|
+    ScraperWiki.save_sqlite([:name, :term], mem)
+  end
+end
+
+base_url = 'https://en.wikipedia.org/wiki/'
+terms = [
+  { year: '2016', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2016' },
+  { year: '2012', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2012' },
+  { year: '2008', url: 'List_of_MPs_elected_in_the_Mongolian_legislative_election,_2008' },
+]
+
+terms.each do |term|
+  save(Term.new(term[:year], base_url + term[:url]))
+end
