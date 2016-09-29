@@ -1,4 +1,10 @@
 GIT
+  remote: https://github.com/everypolitician/field_serializer.git
+  revision: 16d5d90a3095fa2552cbeeb3fb371b3f409ffd63
+  specs:
+    field_serializer (0.1.0)
+
+GIT
   remote: https://github.com/openaustralia/scraperwiki-ruby.git
   revision: fc50176812505e463077d5c673d504a6a234aa78
   branch: morph_defaults
@@ -47,9 +53,16 @@ PLATFORMS
 DEPENDENCIES
   colorize
   execjs
+  field_serializer!
   fuzzy_match
   nokogiri
   open-uri-cached
   pry
   scraperwiki!
   wikidata-client (~> 0.0.7)
+
+RUBY VERSION
+   ruby 2.3.1p112
+
+BUNDLED WITH
+   1.12.5

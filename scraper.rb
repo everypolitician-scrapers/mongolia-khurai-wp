@@ -4,7 +4,7 @@
 require 'scraperwiki'
 require 'nokogiri'
 require 'open-uri/cached'
-
+require 'field_serializer'
 require 'pry'
 
 class Table
@@ -27,38 +27,31 @@ class Table
 end
 
 class Row
+  include FieldSerializer
+
   def initialize(tds)
     @tds = tds
   end
 
-  def to_h
-    {
-      name: name,
-      name__mn: name_mn,
-      party: party,
-      wikiname: wikiname,
-    }
+  field :name do
+    tds[0].xpath('.//a').text.strip
+  end
+
+  field :name_mn do
+    tds[1].text.strip
+  end
+
+  field :party do
+    tds[3].text.strip
+  end
+
+  field :wikiname do
+    tds[0].xpath('.//a[not(@class="new")]/@title').text.strip
   end
 
   private
 
   attr_reader :tds
-
-  def name
-    tds[0].xpath('.//a').text.strip
-  end
-
-  def name_mn
-    tds[1].text.strip
-  end
-
-  def party
-    tds[3].text.strip
-  end
-
-  def wikiname
-    tds[0].xpath('.//a[not(@class="new")]/@title').text.strip
-  end
 end
 
 class Khurai
